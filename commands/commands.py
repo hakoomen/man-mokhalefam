@@ -2,8 +2,14 @@ from typing import TypedDict
 from aiogram import F
 from aiogram.filters import CommandStart
 from aiogram.types import Message, ContentType, Poll, PollAnswer
+from commands.utils import authenticate_chat_id
 from config.settings import settings
-from db.schemas.message_poll import MessagePollBase, MessagePollUpdate, MessagePollRead
+from db.schemas.message_poll import (
+    MessagePollBase,
+    MessagePollCreate,
+    MessagePollUpdate,
+    MessagePollRead,
+)
 from db.schemas.poll_options import PollOptions
 from db.utils.message_poll import (
     create_poll_info,
@@ -16,26 +22,36 @@ from . import dp, bot
 
 @dp.message(CommandStart())
 async def send_welcome(message: Message):
-    if str(message.chat.id) not in settings.ALLOWED_CHANNEL_IDS:
-        await message.answer("ای سینای اااااحححمققق. الحق که عمت خرابه")
-        await bot.leave_chat(message.chat.id)
-        print("kooni detected")
+    if not await authenticate_chat_id(message):
         return
-    print("added to group")
+
+    print(f"added to group: {message.chat.id}")
     await message.answer("من برای مخالفت اومدم")
 
 
 @dp.message(F.content_type.is_(ContentType.AUDIO))
 async def handle_music(message: Message):
+    if not await authenticate_chat_id(message):
+        return
+
     # Send a poll as a reply to the music message
     poll = await message.reply_poll(
         question=f"با {message.audio.file_name} مخالفی؟ (نظر کسی که آهنگو فرستاده اندازه پشم مهم نیست، ولی فعلا مجبوری موافق باشی)",
-        options=PollOptions.as_list(),
+        options=PollOptions.as_list(),  # type: ignore
         is_anonymous=False,
         allows_multiple_answers=False,
     )
+
+    if (
+        poll is None
+        or poll.poll is None
+        or message.audio is None
+        or message.from_user is None
+    ):
+        return
+
     await create_poll_info(
-        MessagePollBase.model_validate(
+        MessagePollCreate.model_validate(
             {
                 "chat_id": str(message.chat.id),
                 "audio_message_id": str(message.message_id),
