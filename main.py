@@ -63,8 +63,8 @@ async def handle_poll(poll: Poll):
     chat = await bot.get_chat(message_info.chat_id)
     member_count = await chat.get_member_count() - 1
 
-    # Check if the majority dislikes the song
     if dislike_count >= member_count / 2:
+        # Check if the majority dislikes the song
         await bot.delete_message(
             message_info.chat_id,
             message_info.audio_message_id,
@@ -73,8 +73,8 @@ async def handle_poll(poll: Poll):
         await delete_message(message_info.poll_id)
         print("mokhalefat accepted")
     elif like_count > member_count / 2:
-        await bot.stop_poll(message_info.chat_id, message_info.poll_message_id)
-        await delete_message(message_info.poll_id)
+        # Check if majority likes the song
+        await bot.delete_message(message_info.chat_id, message_info.poll_message_id)
         print("mofaveghat accepted")
 
 
