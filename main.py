@@ -21,7 +21,9 @@ async def send_welcome(message: Message):
     if str(message.chat.id) not in ALLOWED_CHANNEL_IDS:
         await message.answer("ای سینای اااااحححمققق. الحق که عمت خرابه")
         await bot.leave_chat(message.chat.id)
+        print("kooni detected")
         return
+    print("added to group")
     await message.answer("من برای مخالفت اومدم")
 
 
@@ -42,6 +44,7 @@ async def handle_music(message: Message):
         poll.poll.id,
         message.audio.file_name,
     )
+    print("music poll created")
 
 
 @dp.poll()
@@ -68,9 +71,11 @@ async def handle_poll(poll: Poll):
         )
         await bot.stop_poll(message_info.chat_id, message_info.poll_message_id)
         await delete_message(message_info.poll_id)
+        print("mokhalefat accepted")
     elif like_count > member_count / 2:
         await bot.stop_poll(message_info.chat_id, message_info.poll_message_id)
         await delete_message(message_info.poll_id)
+        print("mofaveghat accepted")
 
 
 async def main() -> None:
