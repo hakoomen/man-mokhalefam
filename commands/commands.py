@@ -23,7 +23,7 @@ async def handle_music(message: Message):
     # Send a poll as a reply to the music message
     options = ["من موافقم", "من مخالفم"]
     poll = await message.reply_poll(
-        question=f"با {message.audio.file_name} مخالفی?",
+        question=f"با {message.audio.file_name} مخالفی؟",
         options=options,
         is_anonymous=False,
         allows_multiple_answers=False,
