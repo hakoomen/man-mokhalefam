@@ -49,33 +49,36 @@ async def handle_music(message: Message):
     print("music poll created")
 
 
-@dp.poll_answer()
-async def handle_poll_answer(poll_answer: PollAnswer):
-    if poll_answer.bot.id != bot.id:
-        return
+# TODO: poll_answer and poll events are called concurrently so doing this is useless
+# @dp.poll_answer()
+# async def handle_poll_answer(poll_answer: PollAnswer):
+#     if poll_answer.bot.id != bot.id:
+#         return
 
-    poll_info = await get_poll_info(poll_answer.poll_id)
-    if poll_info is None:
-        return
+#     poll_info = await get_poll_info(poll_answer.poll_id)
+#     if poll_info is None:
+#         return
 
-    if poll_answer.user.id != poll_info.audio_owner_user_id:
-        return
+#     if str(poll_answer.user.id) != poll_info.audio_owner_user_id:
+#         return
 
-    selected_option: PollOptions = PollOptions.NONE
-    if PollOptions.agree_index in poll_answer.option_ids:
-        selected_option = PollOptions.AGREE
+#     selected_option: PollOptions = PollOptions.NONE
+#     if PollOptions.agree_index() in poll_answer.option_ids:
+#         selected_option = PollOptions.AGREE
+#         print("dude agrees with himself")
 
-    if PollOptions.disagree_index in poll_answer.option_ids:
-        selected_option = PollOptions.DISAGREE
+#     if PollOptions.disagree_index() in poll_answer.option_ids:
+#         selected_option = PollOptions.DISAGREE
+#         print("dude disagrees with himself")
 
-    await set_audio_owner_vote(
-        MessagePollUpdate.model_validate(
-            {
-                "poll_id": poll_info.poll_id,
-                "audio_owner_selected_option": selected_option,
-            }
-        )
-    )
+#     await set_audio_owner_vote(
+#         MessagePollUpdate.model_validate(
+#             {
+#                 "poll_id": poll_info.poll_id,
+#                 "audio_owner_selected_option": selected_option,
+#             }
+#         )
+#     )
 
 
 @dp.poll()
@@ -108,6 +111,7 @@ async def handle_poll(poll: Poll):
     elif votes[PollOptions.agree_index()] > member_count / 2:
         # Check if majority likes the song
         await bot.delete_message(poll_info.chat_id, poll_info.poll_message_id)
+        await delete_poll_info(poll_info.poll_id)
         print("mofaveghat accepted")
 
 
@@ -122,10 +126,11 @@ def _get_agree_and_disagree_vote_count(poll: Poll, poll_info: MessagePollRead):
         if option.text == PollOptions.AGREE:
             number_of_voters_agreed = option.voter_count
 
-    if poll_info.audio_owner_selected_option == PollOptions.AGREE:
-        number_of_voters_agreed -= 1
+    # TODO:
+    # if poll_info.audio_owner_selected_option == PollOptions.AGREE:
+    #     number_of_voters_agreed -= 1
 
-    if poll_info.audio_owner_selected_option == PollOptions.DISAGREE:
-        number_of_voters_disagreed -= 1
+    # if poll_info.audio_owner_selected_option == PollOptions.DISAGREE:
+    #     number_of_voters_disagreed -= 1
 
     return [number_of_voters_agreed, number_of_voters_disagreed]
