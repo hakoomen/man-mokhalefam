@@ -5,15 +5,18 @@ from pydantic import (
 
 
 class MessagePollBase(BaseModel):
-    pass
-
-
-class MessagePoll(MessagePollBase):
-    id: int
     chat_id: str
     audio_message_id: str
     poll_message_id: str
     poll_id: str
     audio_name: str
 
+
+class MessagePollRead(MessagePollBase):
+    id: int
+
     model_config = ConfigDict(from_attributes=True)
+
+
+class MessagePollCreate(MessagePollBase):
+    pass

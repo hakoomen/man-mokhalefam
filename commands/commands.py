@@ -2,7 +2,8 @@ from aiogram import F
 from aiogram.filters import CommandStart
 from aiogram.types import Message, ContentType, Poll
 from config.settings import settings
-from db.utils.message_poll import add_message, get_message_info, delete_message
+from db.schemas.message_poll import MessagePollBase
+from db.utils.message_poll import create_poll_info, get_poll_info, delete_poll_info
 from . import dp, bot
 
 
@@ -27,12 +28,16 @@ async def handle_music(message: Message):
         is_anonymous=False,
         allows_multiple_answers=False,
     )
-    await add_message(
-        message.chat.id,
-        message.message_id,
-        poll.message_id,
-        poll.poll.id,
-        message.audio.file_name,
+    await create_poll_info(
+        MessagePollBase.model_validate(
+            {
+                "chat_id": str(message.chat.id),
+                "audio_message_id": str(message.message_id),
+                "poll_message_id": str(poll.message_id),
+                "poll_id": str(poll.poll.id),
+                "audio_name": str(message.audio.file_name),
+            }
+        )
     )
     print("music poll created")
 
@@ -45,24 +50,24 @@ async def handle_poll(poll: Poll):
     dislike_count = poll.options[1].voter_count
     like_count = poll.options[0].voter_count
 
-    message_info = await get_message_info(poll.id)
-    if message_info is None:
+    poll_info = await get_poll_info(poll.id)
+    if poll_info is None:
         return
 
     # Fetch the chat to find out the number of members
-    chat = await bot.get_chat(message_info.chat_id)
-    member_count = await chat.get_member_count() - 1
+    chat = await bot.get_chat(poll_info.chat_id)
+    member_count = await chat.get_member_count() - 1  # -1 for the bot
 
     if dislike_count >= member_count / 2:
         # Check if the majority dislikes the song
         await bot.delete_message(
-            message_info.chat_id,
-            message_info.audio_message_id,
+            poll_info.chat_id,
+            poll_info.audio_message_id,
         )
-        await bot.stop_poll(message_info.chat_id, message_info.poll_message_id)
-        await delete_message(message_info.poll_id)
+        await bot.stop_poll(poll_info.chat_id, poll_info.poll_message_id)
+        await delete_poll_info(poll_info.poll_id)
         print("mokhalefat accepted")
     elif like_count > member_count / 2:
         # Check if majority likes the song
-        await bot.delete_message(message_info.chat_id, message_info.poll_message_id)
+        await bot.delete_message(poll_info.chat_id, poll_info.poll_message_id)
         print("mofaveghat accepted")
