@@ -148,5 +148,7 @@ def _get_agree_and_disagree_vote_count(poll: Poll, poll_info: MessagePollRead):
 
     # if poll_info.audio_owner_selected_option == PollOptions.DISAGREE:
     #     number_of_voters_disagreed -= 1
-
-    return [number_of_voters_agreed, number_of_voters_disagreed]
+    result = [0, 0]
+    result[PollOptions.agree_index()] = number_of_voters_agreed
+    result[PollOptions.disagree_index()] = number_of_voters_disagreed
+    return result
