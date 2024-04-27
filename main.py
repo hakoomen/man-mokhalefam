@@ -36,7 +36,11 @@ async def handle_music(message: Message):
         allows_multiple_answers=False,
     )
     await add_message(
-        message.chat.id, message.message_id, poll.message_id, poll.poll.id
+        message.chat.id,
+        message.message_id,
+        poll.message_id,
+        poll.poll.id,
+        message.audio.file_name,
     )
 
 
@@ -48,21 +52,25 @@ async def handle_poll(poll: Poll):
     dislike_count = poll.options[1].voter_count
     like_count = poll.options[0].voter_count
 
-    audio_message_id, chat_id, poll_message_id, _ = await get_message_info(poll.id)
-    if not audio_message_id or not chat_id or not poll_message_id:
+    message_info = await get_message_info(poll.id)
+    if message_info is None:
         return
 
     # Fetch the chat to find out the number of members
-    chat = await bot.get_chat(chat_id)
+    chat = await bot.get_chat(message_info.chat_id)
     member_count = await chat.get_member_count() - 1
 
     # Check if the majority dislikes the song
     if dislike_count >= member_count / 2:
-        await bot.delete_messages(chat_id, [audio_message_id, poll_message_id])
-        await delete_message(poll.id)
+        await bot.delete_message(
+            message_info.chat_id,
+            message_info.audio_message_id,
+        )
+        await bot.stop_poll(message_info.chat_id, message_info.poll_message_id)
+        await delete_message(message_info.poll_id)
     elif like_count > member_count / 2:
-        await bot.delete_message(chat_id, poll_message_id)
-        await delete_message(poll.id)
+        await bot.stop_poll(message_info.chat_id, message_info.poll_message_id)
+        await delete_message(message_info.poll_id)
 
 
 async def main() -> None:

@@ -1,3 +1,4 @@
+from attr import dataclass
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.future import select
@@ -22,6 +23,16 @@ class MessagePoll(Base):
     audio_message_id = Column(String, index=True)
     poll_message_id = Column(String, index=True)
     poll_id = Column(String, index=True, unique=True)
+    audio_name = Column(String)
+
+
+@dataclass
+class MessagePollDataClass:
+    chat_id: str
+    audio_message_id: str
+    poll_message_id: str
+    poll_id: str
+    audio_name: str
 
 
 async def init_db():
@@ -40,18 +51,19 @@ async def get_session():
             raise
 
 
-async def get_message_info(poll_id: str):
+async def get_message_info(poll_id: str) -> None | MessagePollDataClass:
     async with get_session() as session:
         statement = select(MessagePoll).where(MessagePoll.poll_id == poll_id)
         result = await session.execute(statement)
         message_poll = result.scalars().first()
         if not message_poll:
-            return None, None, None, None
-        return (
-            message_poll.audio_message_id,
-            message_poll.chat_id,
-            message_poll.poll_message_id,
-            message_poll.poll_id,
+            return None
+        return MessagePollDataClass(
+            chat_id=message_poll.chat_id,
+            audio_message_id=message_poll.audio_message_id,
+            poll_message_id=message_poll.poll_message_id,
+            poll_id=message_poll.poll_id,
+            audio_name=message_poll.audio_name,
         )
 
 
@@ -66,6 +78,7 @@ async def add_message(
     audio_message_id: int | str,
     poll_message_id: int | str,
     poll_id: int | str,
+    audio_name: str,
 ):
     async with get_session() as session:
         new_mapping = MessagePoll(
@@ -73,5 +86,6 @@ async def add_message(
             audio_message_id=str(audio_message_id),
             poll_message_id=str(poll_message_id),
             poll_id=str(poll_id),
+            audio_name=str(audio_name),
         )
         session.add(new_mapping)
