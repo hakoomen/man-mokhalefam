@@ -15,6 +15,7 @@ AsyncSessionLocal: sessionmaker[AsyncSession] = sessionmaker(
 
 
 async def init_db():
+    from db.models.music import Music
     from db.models.message_poll import MessagePoll  # TODO: find a way to dont need this
     from db.models.base import Base
 

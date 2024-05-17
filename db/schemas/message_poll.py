@@ -11,7 +11,6 @@ class MessagePollBase(BaseModel):
     audio_message_id: str
     poll_message_id: str
     poll_id: str
-    audio_name: str
     audio_owner_user_id: str
 
 

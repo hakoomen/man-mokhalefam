@@ -1,22 +1,19 @@
-from typing import TypedDict
 from aiogram import F
 from aiogram.filters import CommandStart
-from aiogram.types import Message, ContentType, Poll, PollAnswer
-from commands.utils import authenticate_chat_id
-from config.settings import settings
+from aiogram.types import Message, ContentType, Poll
 from db.schemas.message_poll import (
-    MessagePollBase,
     MessagePollCreate,
-    MessagePollUpdate,
     MessagePollRead,
 )
+from db.schemas.music import MusicCreate
 from db.schemas.poll_options import PollOptions
 from db.utils.message_poll import (
     create_poll_info,
     get_poll_info,
     delete_poll_info,
-    set_audio_owner_vote,
 )
+from db.utils.music import create_music
+from .utils import authenticate_chat_id, is_music_already_sent
 from . import dp, bot
 
 
@@ -31,8 +28,28 @@ async def send_welcome(message: Message):
 
 @dp.message(F.content_type.is_(ContentType.AUDIO))
 async def handle_music(message: Message):
-    if not await authenticate_chat_id(message):
+    if (
+        not await authenticate_chat_id(message)
+        or not message.audio
+        or not message.audio.file_name
+    ):
         return
+
+    if is_music_already_sent(message.chat.id, message.audio.file_name):
+        await bot.send_message(
+            message.chat.id, "آهنگ تکراریه", reply_to_message_id=message.message_id
+        )
+        await bot.delete_message(message.chat.id, message.message_id)
+        return
+
+    await create_music(
+        MusicCreate.model_validate(
+            {
+                "chat_id": str(message.chat.id),
+                "audio_name": str(message.audio.file_name),
+            }
+        )
+    )
 
     # Send a poll as a reply to the music message
     poll = await message.reply_poll(
@@ -57,11 +74,11 @@ async def handle_music(message: Message):
                 "audio_message_id": str(message.message_id),
                 "poll_message_id": str(poll.message_id),
                 "poll_id": str(poll.poll.id),
-                "audio_name": str(message.audio.file_name),
                 "audio_owner_user_id": str(message.from_user.id),
             }
         )
     )
+
     print("music poll created")
 
 
@@ -99,7 +116,7 @@ async def handle_music(message: Message):
 
 @dp.poll()
 async def handle_poll(poll: Poll):
-    if poll.bot.id != bot.id:
+    if not poll.bot or poll.bot.id != bot.id:
         return
 
     if len(poll.options) != len(PollOptions.as_list()):
@@ -119,14 +136,14 @@ async def handle_poll(poll: Poll):
         # Check if the majority dislikes the song
         await bot.delete_message(
             poll_info.chat_id,
-            poll_info.audio_message_id,
+            int(poll_info.audio_message_id),
         )
-        await bot.stop_poll(poll_info.chat_id, poll_info.poll_message_id)
+        await bot.stop_poll(poll_info.chat_id, int(poll_info.poll_message_id))
         await delete_poll_info(poll_info.poll_id)
         print("mokhalefat accepted")
     elif votes[PollOptions.agree_index()] > member_count / 2:
         # Check if majority likes the song
-        await bot.delete_message(poll_info.chat_id, poll_info.poll_message_id)
+        await bot.delete_message(poll_info.chat_id, int(poll_info.poll_message_id))
         await delete_poll_info(poll_info.poll_id)
         print("mofaveghat accepted")
 
