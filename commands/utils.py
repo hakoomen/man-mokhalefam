@@ -1,7 +1,7 @@
 from aiogram.types import Message
 
 from config.settings import settings
-from db.schemas.music import MusicRead
+from db.schemas.music import Base as BaeMusic
 from db.utils.music import get_music
 from . import bot
 
@@ -16,9 +16,9 @@ async def authenticate_chat_id(message: Message):
     return False
 
 
-async def is_music_already_sent(chat_id: int, audio_name: str):
+async def is_music_already_sent(chat_id: int | str, audio_name: str):
     music = await get_music(
-        MusicRead.model_validate({"chat_id": chat_id, "audio_name": audio_name})
+        BaeMusic.model_validate({"chat_id": str(chat_id), "audio_name": audio_name})
     )
 
     return music is not None

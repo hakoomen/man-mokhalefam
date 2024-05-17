@@ -1,9 +1,4 @@
-from aiohttp import streamer
-from pydantic import (
-    BaseModel,
-    ConfigDict,
-    model_validator,
-)
+from pydantic import BaseModel, ConfigDict, model_validator
 
 
 class Base(BaseModel):
@@ -17,6 +12,7 @@ class Base(BaseModel):
 
 
 class MusicRead(Base):
+    id: int
     model_config = ConfigDict(from_attributes=True)
 
 

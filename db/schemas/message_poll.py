@@ -27,4 +27,4 @@ class MessagePollUpdate(BaseModel):
 
 
 class MessagePollCreate(MessagePollBase):
-    pass
+    music_id: int

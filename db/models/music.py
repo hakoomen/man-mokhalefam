@@ -1,5 +1,5 @@
 from typing import TYPE_CHECKING, List
-from sqlalchemy import Integer, String
+from sqlalchemy import Integer, String, UniqueConstraint
 from sqlalchemy.orm import mapped_column, relationship, Mapped
 
 
@@ -20,3 +20,5 @@ class Music(Base):
     polls: Mapped[List["MessagePoll"]] = relationship(
         back_populates="music", cascade="all, delete-orphan"
     )
+
+    __table_args__ = (UniqueConstraint("chat_id", "audio_name"),)

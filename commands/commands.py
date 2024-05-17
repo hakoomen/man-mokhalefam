@@ -35,14 +35,14 @@ async def handle_music(message: Message):
     ):
         return
 
-    if is_music_already_sent(message.chat.id, message.audio.file_name):
+    if await is_music_already_sent(message.chat.id, message.audio.file_name):
         await bot.send_message(
             message.chat.id, "آهنگ تکراریه", reply_to_message_id=message.message_id
         )
         await bot.delete_message(message.chat.id, message.message_id)
         return
 
-    await create_music(
+    music = await create_music(
         MusicCreate.model_validate(
             {
                 "chat_id": str(message.chat.id),
@@ -75,6 +75,7 @@ async def handle_music(message: Message):
                 "poll_message_id": str(poll.message_id),
                 "poll_id": str(poll.poll.id),
                 "audio_owner_user_id": str(message.from_user.id),
+                "music_id": music.id,
             }
         )
     )

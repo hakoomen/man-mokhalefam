@@ -1,10 +1,10 @@
 from sqlalchemy import select
 from db import get_session
 from db.models.music import Music
-from db.schemas.music import MusicRead, MusicCreate
+from db.schemas.music import Base as BaeMusic, MusicRead, MusicCreate
 
 
-async def get_music(music: MusicRead) -> None | MusicRead:
+async def get_music(music: BaeMusic) -> None | MusicRead:
     async with get_session() as session:
         result = await session.execute(
             select(Music).filter(
@@ -22,3 +22,6 @@ async def create_music(music: MusicCreate):
     async with get_session() as session:
         new_music = Music(**music.model_dump())
         session.add(new_music)
+        await session.commit()
+        await session.refresh(new_music)
+        return MusicRead.model_validate(new_music)
