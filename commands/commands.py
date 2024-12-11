@@ -53,7 +53,7 @@ async def handle_music(message: Message):
 
     # Send a poll as a reply to the music message
     poll = await message.reply_poll(
-        question=f"با {message.audio.file_name} مخالفی؟ (نظر کسی که آهنگو فرستاده اندازه پشم مهم نیست، ولی فعلا مجبوری موافق باشی)",
+        question=f"با {message.audio.file_name} مخالفی؟ (کسی که فرستاده اگه با خودشم مخالف نیست لطفا موافقت کنه)",
         options=PollOptions.as_list(),  # type: ignore
         is_anonymous=False,
         allows_multiple_answers=False,
